@@ -1,0 +1,15 @@
+{
+  "name": "backend-project",
+  "version": "1.0.0",
+  "description": "this is backend project t learn mern backend",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "run dev": "nodemon index.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}
