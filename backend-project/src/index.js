@@ -1,11 +1,20 @@
 //require('dotenv').config({path:'./env'});      //! First method to import dotenv package
 
 import dotenv from 'dotenv';
-dotenv.config({
+dotenv.config({     // !  used to load .env file  firstly
   // path:'./env'
 })
 import connectDB from './db/db.js';
-connectDB();  //? connecting to database
+import express from 'express';
+const app = express();
+
+            //! connecting to database
+            connectDB().then(()=>{
+              app.listen(process.env.PORT||8000,()=>{
+                console.log(`Server is running  on PORT ${process.env.PORT}`);
+              })
+            })     
+            .catch(err=>{console.error('DB connection failed',err)})
 
 //? FIRST approach to connect to database and start server
 
