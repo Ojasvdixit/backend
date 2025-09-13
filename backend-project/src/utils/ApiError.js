@@ -14,8 +14,6 @@ class ApiError extends Error {
 
     //! super is used in two ways: Inside constructor: to call the parent’s constructor,  Inside methods: to call the parent’s methods.
 
-
-
     super(message)
     this.statusCode = statusCode
     this.data = null

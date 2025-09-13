@@ -6,7 +6,7 @@ dotenv.config({     // !  used to load .env file  firstly
 })
 import connectDB from './db/db.js';
 import express from 'express';
-const app = express();
+import {app} from './app.js'
 
             //! connecting to database
             connectDB().then(()=>{
