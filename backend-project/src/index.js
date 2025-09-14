@@ -2,10 +2,12 @@
 
 import dotenv from 'dotenv';
 dotenv.config({     // !  used to load .env file  firstly
-  // path:'./env'
+  path:'./.env'
 })
+console.log('port', process.env.PORT);
+
+
 import connectDB from './db/db.js';
-import express from 'express';
 import {app} from './app.js'
 
             //! connecting to database
