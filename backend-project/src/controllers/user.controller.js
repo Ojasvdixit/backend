@@ -3,6 +3,26 @@ import { ApiError } from '../utils/ApiError.js'
 import {User} from '../models/user.models.js'
 import {uploadToCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
+import { useReducer } from 'react'
+
+
+const generateAccessandRefreshToken = async(userId)=>{
+
+  try{
+  const user = await User.findById(userId)
+    const accessToken = user.generateAccessToken()
+    const refreshToken = user.generateRefreshToken()
+    user.refreshToken = refreshToken;
+    await user.save({validateBeforeSave:false});
+    return {accessToken, refreshToken}
+
+
+  }catch(error){
+    throw new ApiError(500, 'Somethin went wrong while generating access or refresh token')
+  }
+
+
+}
 
 const registerUser = asyncHandler(async(req, res)=>{
 
@@ -81,5 +101,77 @@ const registerUser = asyncHandler(async(req, res)=>{
 
 })
 
+const loginUser =asyncHandler(async(req,res)=>{
 
-export {registerUser}
+   // get data from req body
+   // username or email , password 
+   // find the user
+   // if not found send error
+   // password checked
+   // generate access and refresh token 
+   // send in cookies  and send response
+
+   const{username, email ,password} = req.body;
+   if(!username || !email){                //! logging with both either username or email 
+    throw new ApiError(400, 'Username or email is required')
+   }
+
+  const user = await User.findOne({
+    // email
+    $or:[{username},{email}]           //! or is the mongodb operator used to find either username or email in db
+
+   })
+
+   if(!user){
+    throw new ApiError(404, 'User not found')
+   }
+
+  const isPasswordValid = await user.isPasswordCorrect(password);
+  if(!isPasswordValid){
+    throw new ApiError(401, 'Invalid user credentials')
+   }
+
+  const {accessToken, refreshToken}=  await  generateAccessandRefreshToken(user._id)
+
+  const loggedInUser =  await User.findById(user._id).       //! this is optional , we can also use user directly
+          select('-password -refreshToken')
+
+            //! by httpOnly: true and secure : true it cannot be modified by frontend only by server
+      const options = {      
+            httpOnly:true,   
+            secure:true,
+          }
+
+          return res.status(200).cookie("accessToken", accessToken, options)
+          .cookie("refrehToken", refreshToken, options)
+          .json(
+            new ApiResponse(200, {user:loggedInUser, accessToken ,refreshToken}, 'User logged in successfully') //!   we are sending access and refresh token in response maybe user wants to save this token in local storage or anywhere purpose , its a good practice also in mobile app we cannot set cookies
+          )
+      
+})
+
+const logOutuser = asyncHandler(async(req,res)=>{
+     
+ await  User.findByIdAndUpdate(req.user._id, 
+    {
+      $set:{refreshToken:''}   //! we are clearing refresh token from db
+    },
+    {
+        new :true,
+    }
+  )
+
+   const options = {      
+            httpOnly:true,   
+            secure:true,
+          }
+     return res.status(200)  //! maxAge:0 means cookie will expire immediately     
+           .clearCookie('accessToken',options)
+      .clearCookie('refreshToken',options) //! clearCookie is used to clear cookie from browser from cookies-parser package
+           .json(
+            new ApiResponse(200, {}, 'User logged out successfully')
+           )
+})
+
+
+export {registerUser, loginUser, logOutuser}

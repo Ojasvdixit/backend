@@ -61,7 +61,7 @@ const userSchema = new Schema(
 })
 
 
-//? save is a type of middleware
+//! save is a type of middleware
 
 userSchema.pre('save', async function(next){
   if(!this.isModified('password')) return next()         //! if password is not modified then return next()
