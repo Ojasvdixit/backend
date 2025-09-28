@@ -3,14 +3,13 @@ import { ApiError } from '../utils/ApiError.js'
 import {User} from '../models/user.models.js'
 import {uploadToCloudinary} from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
-import { useReducer } from 'react'
-
+import jwt from 'jsonwebtoken'
 
 const generateAccessandRefreshToken = async(userId)=>{
 
   try{
   const user = await User.findById(userId)
-    const accessToken = user.generateAccessToken()
+    const accessToken = user.generatAccessToken()
     const refreshToken = user.generateRefreshToken()
     user.refreshToken = refreshToken;
     await user.save({validateBeforeSave:false});
@@ -18,7 +17,9 @@ const generateAccessandRefreshToken = async(userId)=>{
 
 
   }catch(error){
-    throw new ApiError(500, 'Somethin went wrong while generating access or refresh token')
+    console.log('sdfg',error);
+    
+    throw new ApiError(500, 'Something went wrong while generating access or refresh token')
   }
 
 
@@ -46,7 +47,9 @@ const registerUser = asyncHandler(async(req, res)=>{
           [fullName,email,username,password].some((field)=>{
             field?.trim()===''})
         ){
-          throw new ApiError(400, 'All fields are required')
+          console.log('qwert');
+          
+          throw new ApiError.json(400, 'All fields are required')
         }
 
        const existedUser = await  User.findOne({
@@ -112,7 +115,7 @@ const loginUser =asyncHandler(async(req,res)=>{
    // send in cookies  and send response
 
    const{username, email ,password} = req.body;
-   if(!username || !email){                //! logging with both either username or email 
+   if(!(username || email)){                //! logging with both either username or email 
     throw new ApiError(400, 'Username or email is required')
    }
 
@@ -174,4 +177,54 @@ const logOutuser = asyncHandler(async(req,res)=>{
 })
 
 
-export {registerUser, loginUser, logOutuser}
+const refreshAccessToken= asyncHandler(async (req,res)=>{
+const incomingRefreshToken =   req.cookies.refreshToken || req.body.refreshToken  //? req.body because of mobile 
+
+  if(!incomingRefreshToken){
+    throw new ApiError(401, 'Unauthorized request');
+  }
+  
+ try{
+  const decodedToken =  jwt.verify(
+    incomingRefreshToken , process.env.REFRESH_TOKEN_SECRET
+  )
+ const user =await User.findById(decodedToken?._id);
+
+ if(!user){
+   throw new ApiError(401, 'Invalid refresh token')
+ }
+ if(incomingRefreshToken!==user?.refreshToken){
+   throw new ApiError(401, 'Refresh token is expired')
+
+ }
+ const options ={
+  httpOnly: true,
+  secure:true
+ }
+const {accessToken, newrefreshToken}=  await generateAccessandRefreshToken(user._id)
+
+ return res.status(200)
+ .cookie("accessToken" , accessToken, options)
+ .cookie("refreshToken", newrefreshToken, options)
+ .json(
+  new ApiResponse(
+    {
+
+      accessToken,
+      refreshToken:newrefreshToken
+    },
+    "Access token refreshed"
+  )
+ )
+ }
+
+
+ catch(error){
+
+   throw new ApiError(401, error?.message || 'Invalid refresh token')
+ }
+
+})
+
+
+export {registerUser, loginUser, logOutuser ,refreshAccessToken}
