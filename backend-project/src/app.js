@@ -28,7 +28,7 @@ app.use(express.urlencoded({extended:true}));
 // }
 
 
- //! it is used to serve static files like images ,css files ,js files
+ //! it is used to serve static files like images , css files , js files
  app.use(express.static('public')) 
 
  app.use(cookieParser())
