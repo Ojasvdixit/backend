@@ -272,7 +272,7 @@ const updateAccountDetails = asyncHandler(async(req,res)=>{
   return res.status(200).json( new ApiResponse(200 , user, "Account details updated successfully"))
 })
 
-
+//! here we can delete audio after uploading to cloudinary
 
 const updateUserAvatar = asyncHandler(async(req,res)=>{
 
@@ -330,6 +330,8 @@ return res.status(200)
 
 
 })
+
+
 
 
 export {registerUser, loginUser, logOutuser ,refreshAccessToken ,changeCurrentPassword, getCurrentUser , updateAccountDetails , updateUserAvatar, updateUserCoverImage}
